@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>代金券列表</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .nav-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .btn-buy {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-buy:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>代金券列表</h2>
+            <a href="/orders" class="nav-button">查看代金券抢购记录</a>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>代金券名称</th>
+                    <th>金额(元)</th>
+                    <th>剩余数量</th>
+                    <th>开始时间</th>
+                    <th>结束时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="voucher : ${vouchers}">
+                    <td th:text="${voucher.djName}"></td>
+                    <td th:text="${voucher.price}"></td>
+                    <td th:text="${voucher.number}"></td>
+                    <td th:text="${#temporals.format(voucher.ksTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                    <td th:text="${#temporals.format(voucher.jsTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                    <td>
+                        <button class="btn-buy" 
+                                th:onclick="'buyVoucher(' + ${voucher.id} + ')'"
+                                th:disabled="${voucher.number <= 0}">
+                            抢购
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function buyVoucher(id) {
+            const userName = prompt('请输入您的用户名：');
+            if (!userName) return;
+            
+            const number = prompt('请输入抢购数量：');
+            if (!number || isNaN(number) || number <= 0) {
+                alert('请输入有效的数量！');
+                return;
+            }
+
+            fetch('/buy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    voucherId: id,
+                    userName: userName,
+                    buyNumber: parseInt(number)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('抢购成功！');
+                    window.location.reload();
+                } else {
+                    alert(data.message || '抢购失败');
+                }
+            })
+            .catch(error => {
+                alert('系统错误，请稍后重试');
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html> 
